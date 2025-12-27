@@ -3402,7 +3402,7 @@ tile_set = SubResource("TileSet_kj7ci")
 position = Vector2(140, -75)
 
 [node name="Camera2D" type="Camera2D" parent="Character"]
-position = Vector2(0, -57)
+position = Vector2(0, -43)
 zoom = Vector2(4.5, 4.5)
 position_smoothing_enabled = true
 

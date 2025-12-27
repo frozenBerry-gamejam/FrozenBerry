@@ -2,9 +2,9 @@ extends CharacterBody2D
 
 const SPEED = 170.0
 const JUMP_VELOCITY = -250.0
-const KNOCKBACK_FORCE = 200.0  # Artırıldı - daha belirgin
-const KNOCKBACK_UP_FORCE = -150.0  # Artırıldı
-const HITSTUN_DURATION = 0.5  # Biraz uzatıldı
+const KNOCKBACK_FORCE = 200.0
+const KNOCKBACK_UP_FORCE = -150.0
+const HITSTUN_DURATION = 0.5
 
 @onready var animated_sprite = $AnimatedSprite2D
 @onready var attack_area = $AttackArea
@@ -15,6 +15,7 @@ var combo_queued = false
 var hit_enemies = []
 var is_in_hitstun = false
 var hitstun_timer = 0.0
+var is_dead = false  # Ölüm durumu
 
 func _ready():
 	add_to_group("player")
@@ -27,6 +28,10 @@ func _ready():
 	print("Character ready! Health: ", health_component.current_health if health_component else "N/A")
 
 func _physics_process(delta: float) -> void:
+	# Ölüyse hiçbir şey yapma
+	if is_dead:
+		return
+	
 	# Hitstun sayacı
 	if is_in_hitstun:
 		hitstun_timer -= delta
@@ -131,6 +136,12 @@ func _on_animated_sprite_2d_animation_finished() -> void:
 	var anim_name = animated_sprite.animation
 	print("ANIMATION_FINISHED: ", anim_name)
 	
+	# Ölüm animasyonu bittiyse oyunu kapat
+	if anim_name == "die":
+		print("Ölüm animasyonu tamamlandı, oyun kapatılıyor...")
+		get_tree().quit()
+		return
+	
 	deactivate_attack()
 	
 	if anim_name == "light_attack_1":
@@ -163,8 +174,8 @@ func _on_attack_area_body_entered(body):
 
 # HASAR SİSTEMİ
 func take_damage(amount: int, attacker_position: Vector2 = global_position) -> void:
-	if is_in_hitstun:
-		print("Character zaten hitstun'da, hasar ignore")
+	if is_in_hitstun or is_dead:
+		print("Character zaten hitstun'da veya ölü, hasar ignore")
 		return
 	
 	if health_component:
@@ -205,9 +216,40 @@ func _on_damage_taken(amount: int) -> void:
 	print("PLAYER: %d hasar aldı!" % amount)
 
 func _on_health_component_died() -> void:
-	print("Player öldü!")
+	print("=== PLAYER ÖLDÜ ===")
+	is_dead = true
+	
+	# Tüm fizik ve kontrolleri durdur
 	set_physics_process(false)
-	# Ölüm animasyonu
-	# animated_sprite.play("death")
-	# await animated_sprite.animation_finished
-	# get_tree().reload_current_scene()
+	velocity = Vector2.ZERO
+	
+	# Saldırı alanını kapat
+	if attack_area:
+		attack_area.monitoring = false
+	
+	# Tüm enemy'leri durdur
+	freeze_all_enemies()
+	
+	# Ölüm animasyonunu oynat
+	if animated_sprite.sprite_frames.has_animation("die"):
+		print("Ölüm animasyonu başlıyor...")
+		animated_sprite.play("die")
+		# Animasyon bittiğinde _on_animated_sprite_2d_animation_finished çağrılacak
+	else:
+		print("HATA: 'die' animasyonu bulunamadı! Oyun kapatılıyor...")
+		await get_tree().create_timer(1.0).timeout
+		get_tree().quit()
+
+func freeze_all_enemies() -> void:
+	# Sahnedeki tüm enemy'leri bul ve dondur
+	var enemies = get_tree().get_nodes_in_group("enemies")
+	print("Dondurulan enemy sayısı: ", enemies.size())
+	
+	for enemy in enemies:
+		if enemy.has_method("freeze"):
+			enemy.freeze()
+		else:
+			# freeze metodu yoksa fizik işlemini durdur
+			if enemy.has_method("set_physics_process"):
+				enemy.set_physics_process(false)
+				enemy.velocity = Vector2.ZERO

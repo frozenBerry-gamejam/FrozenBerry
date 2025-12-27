@@ -7,11 +7,17 @@ const SPEED = 150.0
 const PATROL_RANGE = 150.0
 const DETECTION_RADIUS = 180.0
 const CHASE_EXTENSION = 150.0
-const ATTACK_DAMAGE = 1
+const ATTACK_DAMAGE = 10
 const ATTACK_COOLDOWN = 1.5
-const KNOCKBACK_RECOVERY = 0.4  # Knockback süresi
-const AFTER_HIT_WAIT = 1.0  # Hasar verdikten sonra bekleme
-const AFTER_DAMAGE_WAIT = 0.8  # Hasar aldıktan sonra bekleme
+const KNOCKBACK_RECOVERY = 0.4
+const AFTER_HIT_WAIT = 1.0
+const AFTER_DAMAGE_WAIT = 0.8
+
+# ═══════════════════════════════════════════════════════════
+# ÖLÜM ANİMASYONU SÜRESİ - BURADAN DEĞİŞTİREBİLİRSİN! 💀
+# ═══════════════════════════════════════════════════════════
+const DEATH_ANIMATION_DURATION = 1.7  # Saniye cinsinden
+# ═══════════════════════════════════════════════════════════
 
 # State
 var current_state: State = State.PATROL
@@ -25,64 +31,98 @@ var collision_damage_cooldown: float = 0.0
 var is_in_hitstun: bool = false
 var hitstun_timer: float = 0.0
 var cooldown_timer: float = 0.0
+var is_frozen: bool = false
+var is_dead: bool = false
+var is_attacking: bool = false
+var hit_targets = []
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var detection_area: Area2D = $DetectionArea
 @onready var health_component: HealthComponent = $HealthComponent
+@onready var enemy_attack_area: Area2D = $EnemyAttackArea
 
 func _ready() -> void:
+	add_to_group("enemies")
 	spawn_position = global_position
-	detection_area.body_entered.connect(_on_detection_area_body_entered)
-	detection_area.body_exited.connect(_on_detection_area_body_exited)
-	animated_sprite.play("walk+run")
+	
+	# Detection area
+	if detection_area:
+		if not detection_area.body_entered.is_connected(_on_detection_area_body_entered):
+			detection_area.body_entered.connect(_on_detection_area_body_entered)
+		if not detection_area.body_exited.is_connected(_on_detection_area_body_exited):
+			detection_area.body_exited.connect(_on_detection_area_body_exited)
+	
+	# Animasyon sinyalleri
+	if animated_sprite:
+		if not animated_sprite.animation_finished.is_connected(_on_animation_finished):
+			animated_sprite.animation_finished.connect(_on_animation_finished)
+		if not animated_sprite.frame_changed.is_connected(_on_frame_changed):
+			animated_sprite.frame_changed.connect(_on_frame_changed)
+	
+	# Attack area
+	if enemy_attack_area:
+		enemy_attack_area.monitoring = false
+		if not enemy_attack_area.body_entered.is_connected(_on_enemy_attack_area_body_entered):
+			enemy_attack_area.body_entered.connect(_on_enemy_attack_area_body_entered)
+	else:
+		print("✗ HATA: EnemyAttackArea bulunamadı!")
+	
+	# İlk animasyon
+	if animated_sprite.sprite_frames.has_animation("enemy_run"):
+		animated_sprite.play("enemy_run")
+	
 	print("Enemy spawned at: ", spawn_position)
 	
+	# Health component
 	if health_component:
-		health_component.died.connect(_on_health_component_died)
-		health_component.damage_taken.connect(_on_damage_taken)
+		if not health_component.died.is_connected(_on_health_component_died):
+			health_component.died.connect(_on_health_component_died)
+		if not health_component.damage_taken.is_connected(_on_damage_taken):
+			health_component.damage_taken.connect(_on_damage_taken)
 
 func _physics_process(delta: float) -> void:
+	if is_dead or is_frozen:
+		return
+	
 	# Sayaçlar
-	if attack_timer > 0:
-		attack_timer -= delta
 	if collision_damage_cooldown > 0:
 		collision_damage_cooldown -= delta
 	if hitstun_timer > 0:
 		hitstun_timer -= delta
 		if hitstun_timer <= 0:
 			is_in_hitstun = false
-			# Hitstun bitince cooldown'a geç
 			current_state = State.COOLDOWN
 			cooldown_timer = AFTER_DAMAGE_WAIT
-			print("Enemy: Hitstun bitti, cooldown başladı")
 	if cooldown_timer > 0:
 		cooldown_timer -= delta
 		if cooldown_timer <= 0:
 			change_state(State.PATROL)
 
-	# Hitstun sırasında yerçekimi uygula ama kontrol verme
+	# Hitstun
 	if is_in_hitstun:
-		# Yerçekimi
 		if not is_on_floor():
 			velocity += get_gravity() * delta
-		
-		# Sürtünme
 		velocity.x = move_toward(velocity.x, 0, SPEED * delta * 3)
-		
 		move_and_slide()
 		return
 
-	# Normal yerçekimi
+	# Yerçekimi
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 
-	# Cooldown sırasında hareketsiz dur
+	# Cooldown
 	if current_state == State.COOLDOWN:
 		velocity.x = move_toward(velocity.x, 0, SPEED * 2)
 		move_and_slide()
 		return
 
-	# State davranışları
+	# Saldırı animasyonu
+	if is_attacking:
+		velocity.x = 0
+		move_and_slide()
+		return
+
+	# State
 	match current_state:
 		State.PATROL:
 			patrol_behavior(delta)
@@ -92,15 +132,15 @@ func _physics_process(delta: float) -> void:
 			attack_behavior(delta)
 
 	move_and_slide()
-	check_collision_damage()
 
 func patrol_behavior(delta: float) -> void:
 	velocity.x = patrol_direction * SPEED * 0.5
 	var offset_from_spawn = global_position.x - spawn_position.x
 
+	update_animation()
+
 	if returning_home:
-		var distance_from_spawn_abs = abs(offset_from_spawn)
-		if distance_from_spawn_abs < PATROL_RANGE:
+		if abs(offset_from_spawn) < PATROL_RANGE:
 			returning_home = false
 
 	if patrol_direction > 0 and offset_from_spawn >= PATROL_RANGE:
@@ -119,6 +159,8 @@ func chase_behavior(delta: float) -> void:
 	if player == null:
 		change_state(State.PATROL)
 		return
+
+	update_animation()
 
 	var offset_from_spawn = global_position.x - spawn_position.x
 	var max_chase_distance = PATROL_RANGE + CHASE_EXTENSION
@@ -141,11 +183,13 @@ func chase_behavior(delta: float) -> void:
 		
 		if abs(direction_to_player) > 15.0:
 			animated_sprite.flip_h = direction < 0
+			if enemy_attack_area:
+				enemy_attack_area.scale.x = -1 if direction < 0 else 1
 	else:
 		velocity.x = 0
 
 	var distance_to_player_horiz = abs(direction_to_player)
-	if distance_to_player_horiz < 25.0:
+	if distance_to_player_horiz < 60.0:
 		change_state(State.ATTACK)
 
 func attack_behavior(delta: float) -> void:
@@ -156,19 +200,42 @@ func attack_behavior(delta: float) -> void:
 	velocity.x = 0
 
 	var distance_to_player_horiz = abs(player.global_position.x - global_position.x)
-	if distance_to_player_horiz > 40.0:
+	if distance_to_player_horiz > 80.0:
 		change_state(State.CHASE)
 		return
 
-	if distance_to_player_horiz > 8.0:
-		var direction_to_player = player.global_position.x - global_position.x
-		animated_sprite.flip_h = direction_to_player < 0
+	# Player'a bak
+	var direction_to_player = player.global_position.x - global_position.x
+	animated_sprite.flip_h = direction_to_player < 0
+	if enemy_attack_area:
+		enemy_attack_area.scale.x = -1 if direction_to_player < 0 else 1
+	
+	# Saldırı
+	if collision_damage_cooldown <= 0.0 and not is_attacking:
+		perform_attack()
+
+func perform_attack() -> void:
+	print("═══ ENEMY SALDIRI BAŞLIYOR ═══")
+	is_attacking = true
+	hit_targets.clear()
+	
+	if animated_sprite.sprite_frames.has_animation("enemy_attack"):
+		animated_sprite.play("enemy_attack")
+		print("► enemy_attack oynatılıyor")
+	else:
+		print("✗ HATA: enemy_attack animasyonu yok!")
+		is_attacking = false
+
+func update_animation() -> void:
+	if not is_attacking and not is_dead:
+		if animated_sprite.animation != "enemy_run":
+			animated_sprite.play("enemy_run")
 
 func change_state(new_state: State) -> void:
 	if current_state == new_state:
 		return
 
-	print("Enemy STATE: ", State.keys()[current_state], " -> ", State.keys()[new_state])
+	print("STATE: ", State.keys()[current_state], " → ", State.keys()[new_state])
 	current_state = new_state
 
 	match current_state:
@@ -182,10 +249,13 @@ func change_state(new_state: State) -> void:
 
 func flip_sprite() -> void:
 	animated_sprite.flip_h = patrol_direction < 0
+	if enemy_attack_area:
+		enemy_attack_area.scale.x = -1 if patrol_direction < 0 else 1
 
 func _on_detection_area_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") or body.name == "Character":
 		player = body
+		print("► Player algılandı: ", body.name)
 
 func _on_detection_area_body_exited(body: Node2D) -> void:
 	if body == player:
@@ -193,82 +263,127 @@ func _on_detection_area_body_exited(body: Node2D) -> void:
 		if current_state == State.CHASE or current_state == State.ATTACK:
 			change_state(State.PATROL)
 
-func check_collision_damage() -> void:
-	if is_in_hitstun or current_state == State.COOLDOWN:
+func _on_frame_changed() -> void:
+	if is_dead:
 		return
 	
-	for i in get_slide_collision_count():
-		var collision = get_slide_collision(i)
-		var collider = collision.get_collider()
+	var current_anim = animated_sprite.animation
+	var current_frame = animated_sprite.frame
+	
+	if current_anim == "enemy_attack":
+		print("  Frame: ", current_frame)
+		if current_frame == 1:
+			activate_enemy_attack()
+		else:
+			deactivate_enemy_attack()
 
-		if collider and (collider.name == "Character" or collider.is_in_group("player")):
-			if collision_damage_cooldown <= 0.0:
-				if collider.has_method("take_damage"):
-					collider.take_damage(ATTACK_DAMAGE, global_position)
-					collision_damage_cooldown = ATTACK_COOLDOWN
-					
-					# Hasar verdikten sonra geri çekil
-					print("Enemy: Oyuncuya hasar verdi, geri çekiliyor...")
-					var retreat_direction = sign(global_position.x - collider.global_position.x)
-					if retreat_direction == 0:
-						retreat_direction = 1
-					
-					# Geri çekilme velocity'si
-					velocity.x = retreat_direction * SPEED * 1.2
-					
-					# Cooldown'a geç
-					current_state = State.COOLDOWN
-					cooldown_timer = AFTER_HIT_WAIT
+func activate_enemy_attack() -> void:
+	if enemy_attack_area and not enemy_attack_area.monitoring:
+		enemy_attack_area.monitoring = true
+		print("  ╔═══ ATTACK AREA AKTİF ═══╗")
 
-# HASAR SİSTEMİ
+func deactivate_enemy_attack() -> void:
+	if enemy_attack_area and enemy_attack_area.monitoring:
+		enemy_attack_area.monitoring = false
+		print("  ╚═══ ATTACK AREA KAPANDI ═══╝")
+
+func _on_enemy_attack_area_body_entered(body: Node2D) -> void:
+	print("╔═══════════════════════════╗")
+	print("║ ATTACK AREA: Body girdi!  ║")
+	print("║ Body: ", body.name, " ║")
+	print("╚═══════════════════════════╝")
+	
+	if body in hit_targets:
+		print("⚠ Zaten vuruldu!")
+		return
+	
+	if body.is_in_group("player") or body.name == "Character":
+		if body.has_method("take_damage"):
+			print("💥 HASAR VERİLİYOR: ", ATTACK_DAMAGE)
+			body.take_damage(ATTACK_DAMAGE, global_position)
+			hit_targets.append(body)
+			collision_damage_cooldown = ATTACK_COOLDOWN
+		else:
+			print("✗ take_damage metodu yok!")
+
 func take_damage(amount: int, attacker_position: Vector2 = global_position) -> void:
-	if is_in_hitstun or current_state == State.COOLDOWN:
-		print("Enemy zaten hitstun/cooldown'da, hasar ignore")
+	if is_in_hitstun or current_state == State.COOLDOWN or is_frozen or is_dead:
 		return
 	
 	if health_component:
 		health_component.take_damage(amount)
 	
-	# Knockback yönünü hesapla
 	var knockback_dir = sign(global_position.x - attacker_position.x)
 	if knockback_dir == 0:
 		knockback_dir = 1
 	
-	# Knockback uygula
-	apply_knockback(knockback_dir, 200.0, -150.0)
+	if is_attacking:
+		is_attacking = false
+		deactivate_enemy_attack()
 	
-	print("Enemy knockback: direction=", knockback_dir, " force=200")
+	apply_knockback(knockback_dir, 200.0, -150.0)
 
 func apply_knockback(direction: float, force: float, up_force: float) -> void:
-	# Velocity'yi direkt set et
 	velocity.x = direction * force
 	velocity.y = up_force
-	
 	is_in_hitstun = true
 	hitstun_timer = KNOCKBACK_RECOVERY
 	current_state = State.HITSTUN
-	
-	print("Enemy: Knockback uygulandı! vx=", velocity.x, " vy=", velocity.y, " hitstun=", KNOCKBACK_RECOVERY, "s")
 
 func _on_damage_taken(amount: int) -> void:
-	# Hasar görsel efekti
 	animated_sprite.modulate = Color(1, 0.3, 0.3)
 	await get_tree().create_timer(0.1).timeout
 	animated_sprite.modulate = Color.WHITE
 
 func _on_health_component_died() -> void:
-	print("Enemy öldü! Siliniyor...")
+	if is_dead:
+		return
 	
+	print("╔═══════════════════╗")
+	print("║  ENEMY ÖLDÜ!      ║")
+	print("╚═══════════════════╝")
+	is_dead = true
+	is_attacking = false
+	
+	deactivate_enemy_attack()
 	set_physics_process(false)
 	velocity = Vector2.ZERO
 	collision_layer = 0
 	collision_mask = 0
 	
-	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(animated_sprite, "modulate:a", 0.0, 0.5)
-	tween.tween_property(animated_sprite, "scale", Vector2(0.5, 0.5), 0.5)
+	# Ölüm animasyonu - Süreyi yukarıdaki değişkenden al
+	if animated_sprite.sprite_frames.has_animation("enemy_dead"):
+		animated_sprite.play("enemy_dead")
+		print("► enemy_dead başladı, süre: ", DEATH_ANIMATION_DURATION, "s")
+		
+		# DEATH_ANIMATION_DURATION kadar bekle
+		await get_tree().create_timer(DEATH_ANIMATION_DURATION).timeout
+		
+		print("╔═══════════════════╗")
+		print("║ ENEMY SİLİNİYOR   ║")
+		print("╚═══════════════════╝")
+		queue_free()
+	else:
+		print("✗ enemy_dead yok, hemen siliniyor")
+		queue_free()
+
+func _on_animation_finished() -> void:
+	if is_dead:
+		return
 	
-	await tween.finished
-	print("Enemy silindi!")
-	queue_free()
+	var anim_name = animated_sprite.animation
+	print("Animasyon bitti: ", anim_name)
+	
+	if anim_name == "enemy_attack":
+		is_attacking = false
+		deactivate_enemy_attack()
+		print("► Saldırı tamamlandı")
+		animated_sprite.play("enemy_run")
+
+func freeze() -> void:
+	print("Enemy donduruluyor...")
+	is_frozen = true
+	velocity = Vector2.ZERO
+	is_attacking = false
+	deactivate_enemy_attack()
+	animated_sprite.pause()

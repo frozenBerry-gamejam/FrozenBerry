@@ -1,8 +1,29 @@
-[gd_scene load_steps=44 format=3 uid="uid://pucw1kgckbjk"]
+[gd_scene load_steps=50 format=3 uid="uid://pucw1kgckbjk"]
 
 [ext_resource type="Texture2D" uid="uid://dn8yte3gjqp8w" path="res://assets/character/Fullmain.png" id="1_3x35j"]
 [ext_resource type="Script" uid="uid://culdt0pl1js76" path="res://scripts/character.gd" id="1_k8rrn"]
+[ext_resource type="Texture2D" uid="uid://bqeesryni0ivn" path="res://assets/character/main2.1.png" id="2_6k5wm"]
 [ext_resource type="Script" uid="uid://bv64cqt34nko2" path="res://scripts/health_component.gd" id="3_d7vt2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ii2y5"]
+atlas = ExtResource("2_6k5wm")
+region = Rect2(0, 333, 50, 37)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_luavg"]
+atlas = ExtResource("2_6k5wm")
+region = Rect2(50, 333, 50, 37)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nahq7"]
+atlas = ExtResource("2_6k5wm")
+region = Rect2(100, 333, 50, 37)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mouxg"]
+atlas = ExtResource("2_6k5wm")
+region = Rect2(150, 333, 50, 37)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cuk02"]
+atlas = ExtResource("2_6k5wm")
+region = Rect2(200, 333, 50, 37)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_d7vt2"]
 atlas = ExtResource("1_3x35j")
@@ -154,6 +175,26 @@ region = Rect2(250, 40, 50, 40)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_mbevu"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ii2y5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_luavg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nahq7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mouxg")
+}, {
+"duration": 3.0,
+"texture": SubResource("AtlasTexture_cuk02")
+}],
+"loop": true,
+"name": &"die",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_d7vt2")
@@ -309,7 +350,9 @@ script = ExtResource("1_k8rrn")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_mbevu")
-animation = &"run"
+animation = &"die"
+frame = 4
+frame_progress = 0.57212466
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_3x35j")
@@ -324,6 +367,8 @@ shape = SubResource("RectangleShape2D_k8rrn")
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("3_d7vt2")
+max_health = 10
+current_health = 1
 metadata/_custom_type_script = "uid://bv64cqt34nko2"
 
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]

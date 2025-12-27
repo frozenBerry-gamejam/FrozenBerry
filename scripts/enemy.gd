@@ -5,10 +5,10 @@ enum State { PATROL, CHASE, ATTACK, HITSTUN, COOLDOWN }
 # Constants
 const SPEED = 150.0
 const PATROL_RANGE = 150.0
-const DETECTION_RADIUS = 180.0
+const DETECTION_RADIUS = 230.0
 const CHASE_EXTENSION = 150.0
 const ATTACK_DAMAGE = 10
-const ATTACK_COOLDOWN = 1.5
+const ATTACK_COOLDOWN = 0.5
 const KNOCKBACK_RECOVERY = 0.4
 const AFTER_HIT_WAIT = 1.0
 const AFTER_DAMAGE_WAIT = 0.8
@@ -97,7 +97,15 @@ func _physics_process(delta: float) -> void:
 	if cooldown_timer > 0:
 		cooldown_timer -= delta
 		if cooldown_timer <= 0:
-			change_state(State.PATROL)
+			# Cooldown bitti - player hala yakınsa CHASE, değilse PATROL
+			if player != null:
+				var distance_to_player = global_position.distance_to(player.global_position)
+				if distance_to_player <= DETECTION_RADIUS:
+					change_state(State.CHASE)
+				else:
+					change_state(State.PATROL)
+			else:
+				change_state(State.PATROL)
 
 	# Hitstun
 	if is_in_hitstun:
@@ -114,6 +122,13 @@ func _physics_process(delta: float) -> void:
 	# Cooldown
 	if current_state == State.COOLDOWN:
 		velocity.x = move_toward(velocity.x, 0, SPEED * 2)
+		
+		# Cooldown sırasında animasyon güncelle
+		if abs(velocity.x) < 5.0:
+			if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+				if animated_sprite.animation != "enemy_idle":
+					animated_sprite.play("enemy_idle")
+		
 		move_and_slide()
 		return
 
@@ -231,14 +246,22 @@ func attack_behavior(delta: float) -> void:
 		enemy_attack_area.scale.x = -1 if direction_to_player < 0 else 1
 	
 	# Saldırı
-	# print("  Cooldown: ", collision_damage_cooldown, " is_attacking: ", is_attacking)
 	if collision_damage_cooldown <= 0.0 and not is_attacking:
 		perform_attack()
+	elif collision_damage_cooldown > 0.0 and not is_attacking:
+		# Cooldown aktif - idle'da bekle
+		if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+			if animated_sprite.animation != "enemy_idle":
+				animated_sprite.play("enemy_idle")
 
 func perform_attack() -> void:
 	print("═══ ENEMY SALDIRI BAŞLIYOR ═══")
 	is_attacking = true
 	hit_targets.clear()
+	
+	# ÇÖZÜM: Cooldown'u SALDIRI BAŞINDA set et, hit anında değil!
+	collision_damage_cooldown = ATTACK_COOLDOWN
+	print("► Cooldown başladı: ", ATTACK_COOLDOWN, " saniye")
 	
 	if animated_sprite.sprite_frames.has_animation("enemy_attack"):
 		# Loop'u kapat
@@ -354,7 +377,8 @@ func _on_enemy_attack_area_body_entered(body: Node2D) -> void:
 			print("💥 HASAR VERİLİYOR: ", ATTACK_DAMAGE)
 			body.take_damage(ATTACK_DAMAGE, global_position)
 			hit_targets.append(body)
-			collision_damage_cooldown = ATTACK_COOLDOWN
+			# ÇÖZÜM: Cooldown'u burada SET ETME! perform_attack()'ta zaten başladı
+			print("  ✓ Hasar verildi, cooldown zaten aktif")
 		else:
 			print("✗ take_damage metodu yok!")
 
@@ -429,9 +453,13 @@ func _on_animation_finished() -> void:
 	if anim_name == "enemy_attack":
 		is_attacking = false
 		deactivate_enemy_attack()
-		print("► Saldırı tamamlandı, idle'a geçiyor")
+		print("► Saldırı tamamlandı, COOLDOWN'a geçiyor")
 		
-		# Saldırı bitince idle'a geç
+		# Saldırı bitince COOLDOWN state'ine geç
+		current_state = State.COOLDOWN
+		cooldown_timer = AFTER_HIT_WAIT  # 1 saniye cooldown
+		
+		# Cooldown sırasında idle animasyonu
 		if animated_sprite.sprite_frames.has_animation("enemy_idle"):
 			animated_sprite.play("enemy_idle")
 		else:

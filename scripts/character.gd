@@ -4,7 +4,7 @@ const SPEED = 170.0
 const JUMP_VELOCITY = -250.0
 const KNOCKBACK_FORCE = 200.0
 const KNOCKBACK_UP_FORCE = -150.0
-const HITSTUN_DURATION = 0.5
+const HITSTUN_DURATION = 0.8  # Enemy ATTACK_COOLDOWN (1.5s) + buffer (0.3s)
 
 @onready var animated_sprite = $AnimatedSprite2D
 @onready var attack_area = $AttackArea

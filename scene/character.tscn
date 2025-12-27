@@ -366,8 +366,8 @@ shape = SubResource("RectangleShape2D_k8rrn")
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("3_d7vt2")
-max_health = 20
-current_health = 20
+max_health = 2000000
+current_health = 200000
 metadata/_custom_type_script = "uid://bv64cqt34nko2"
 
 [node name="Camera2D" type="Camera2D" parent="."]

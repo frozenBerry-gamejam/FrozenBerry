@@ -194,11 +194,21 @@ func chase_behavior(delta: float) -> void:
 		change_state(State.ATTACK)
 
 func attack_behavior(delta: float) -> void:
-	print("● ATTACK BEHAVIOR çalışıyor, mesafe: ", abs(player.global_position.x - global_position.x) if player else "PLAYER YOK")
-	
+	# Player yoksa PATROL'e dön
 	if player == null:
 		change_state(State.PATROL)
 		return
+	
+	# Player öldüyse idle'a geç ve bekle
+	if player.has_method("is_alive") and not player.is_alive():
+		velocity.x = 0
+		if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+			if animated_sprite.animation != "enemy_idle":
+				animated_sprite.play("enemy_idle")
+		return
+	
+	# DEBUG: Her frame yazdırma, sadece state değişiminde
+	# print("● ATTACK BEHAVIOR çalışıyor, mesafe: ", abs(player.global_position.x - global_position.x))
 
 	velocity.x = 0
 
@@ -215,7 +225,7 @@ func attack_behavior(delta: float) -> void:
 		enemy_attack_area.scale.x = -1 if direction_to_player < 0 else 1
 	
 	# Saldırı
-	print("  Cooldown: ", collision_damage_cooldown, " is_attacking: ", is_attacking)
+	# print("  Cooldown: ", collision_damage_cooldown, " is_attacking: ", is_attacking)
 	if collision_damage_cooldown <= 0.0 and not is_attacking:
 		perform_attack()
 
@@ -225,16 +235,27 @@ func perform_attack() -> void:
 	hit_targets.clear()
 	
 	if animated_sprite.sprite_frames.has_animation("enemy_attack"):
+		# Loop'u kapat
+		animated_sprite.sprite_frames.set_animation_loop("enemy_attack", false)
 		animated_sprite.play("enemy_attack")
-		print("► enemy_attack oynatılıyor")
+		print("► enemy_attack oynatılıyor, loop: ", animated_sprite.sprite_frames.get_animation_loop("enemy_attack"))
 	else:
 		print("✗ HATA: enemy_attack animasyonu yok!")
 		is_attacking = false
 
 func update_animation() -> void:
 	if not is_attacking and not is_dead:
-		if animated_sprite.animation != "enemy_run":
-			animated_sprite.play("enemy_run")
+		# Eğer velocity 0 ise idle, değilse run
+		if abs(velocity.x) < 5.0:
+			if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+				if animated_sprite.animation != "enemy_idle":
+					animated_sprite.play("enemy_idle")
+			else:
+				if animated_sprite.animation != "enemy_run":
+					animated_sprite.play("enemy_run")
+		else:
+			if animated_sprite.animation != "enemy_run":
+				animated_sprite.play("enemy_run")
 
 func change_state(new_state: State) -> void:
 	if current_state == new_state:
@@ -261,9 +282,22 @@ func _on_detection_area_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") or body.name == "Character":
 		player = body
 		print("► Player algılandı: ", body.name)
+		
+		# Player görüldüğünde idle'a geç
+		if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+			animated_sprite.play("enemy_idle")
+			# 0.3 saniye idle bekle, sonra chase başlat
+			await get_tree().create_timer(0.3).timeout
+			if player != null and current_state == State.PATROL:
+				change_state(State.CHASE)
 
 func _on_detection_area_body_exited(body: Node2D) -> void:
 	if body == player:
+		# Player öldüyse state değiştirme
+		if player.has_method("is_alive") and not player.is_alive():
+			print("► Player öldü, state değişmiyor")
+			return
+		
 		player = null
 		if current_state == State.CHASE or current_state == State.ATTACK:
 			change_state(State.PATROL)
@@ -284,12 +318,12 @@ func _on_frame_changed() -> void:
 
 func activate_enemy_attack() -> void:
 	if enemy_attack_area and not enemy_attack_area.monitoring:
-		enemy_attack_area.monitoring = true
+		enemy_attack_area.set_deferred("monitoring", true)
 		print("  ╔═══ ATTACK AREA AKTİF ═══╗")
 
 func deactivate_enemy_attack() -> void:
 	if enemy_attack_area and enemy_attack_area.monitoring:
-		enemy_attack_area.monitoring = false
+		enemy_attack_area.set_deferred("monitoring", false)
 		print("  ╚═══ ATTACK AREA KAPANDI ═══╝")
 
 func _on_enemy_attack_area_body_entered(body: Node2D) -> void:
@@ -382,13 +416,29 @@ func _on_animation_finished() -> void:
 	if anim_name == "enemy_attack":
 		is_attacking = false
 		deactivate_enemy_attack()
-		print("► Saldırı tamamlandı")
-		animated_sprite.play("enemy_run")
+		print("► Saldırı tamamlandı, idle'a geçiyor")
+		
+		# Saldırı bitince idle'a geç
+		if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+			animated_sprite.play("enemy_idle")
+		else:
+			animated_sprite.play("enemy_run")
 
 func freeze() -> void:
-	print("Enemy donduruluyor...")
+	print("  → Enemy freeze() çağrıldı")
 	is_frozen = true
 	velocity = Vector2.ZERO
 	is_attacking = false
 	deactivate_enemy_attack()
-	animated_sprite.pause()
+	
+	# Animasyonu idle'a çevir (deferred kullan - signal içinde olabilir)
+	if animated_sprite.sprite_frames.has_animation("enemy_idle"):
+		print("    ✓ Enemy idle'a geçiyor...")
+		# Önce current_state'i durdur
+		current_state = State.COOLDOWN
+		# Sonra animasyonu değiştir
+		animated_sprite.call_deferred("play", "enemy_idle")
+	else:
+		# enemy_idle yoksa pause yap
+		print("    ⚠ enemy_idle yok, pause yapılıyor")
+		animated_sprite.pause()

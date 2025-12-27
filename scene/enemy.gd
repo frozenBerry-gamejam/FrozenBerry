@@ -189,10 +189,13 @@ func chase_behavior(delta: float) -> void:
 		velocity.x = 0
 
 	var distance_to_player_horiz = abs(direction_to_player)
-	if distance_to_player_horiz < 60.0:
+	if distance_to_player_horiz < 80.0:  # 60 → 80 (daha uzaktan saldır)
+		print("▶ CHASE → ATTACK (mesafe: ", distance_to_player_horiz, ")")
 		change_state(State.ATTACK)
 
 func attack_behavior(delta: float) -> void:
+	print("● ATTACK BEHAVIOR çalışıyor, mesafe: ", abs(player.global_position.x - global_position.x) if player else "PLAYER YOK")
+	
 	if player == null:
 		change_state(State.PATROL)
 		return
@@ -200,7 +203,8 @@ func attack_behavior(delta: float) -> void:
 	velocity.x = 0
 
 	var distance_to_player_horiz = abs(player.global_position.x - global_position.x)
-	if distance_to_player_horiz > 80.0:
+	if distance_to_player_horiz > 100.0:  # 80 → 100 (daha geç bırak)
+		print("▶ ATTACK → CHASE (çok uzak: ", distance_to_player_horiz, ")")
 		change_state(State.CHASE)
 		return
 
@@ -211,6 +215,7 @@ func attack_behavior(delta: float) -> void:
 		enemy_attack_area.scale.x = -1 if direction_to_player < 0 else 1
 	
 	# Saldırı
+	print("  Cooldown: ", collision_damage_cooldown, " is_attacking: ", is_attacking)
 	if collision_damage_cooldown <= 0.0 and not is_attacking:
 		perform_attack()
 

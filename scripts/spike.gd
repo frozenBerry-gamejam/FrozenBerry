@@ -1,9 +1,6 @@
 extends Area2D
 
 
-@onready var spike_sound: AudioStreamPlayer2D = $SpikeSound
-
-
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
@@ -14,6 +11,5 @@ func _on_body_entered(body: Node2D) -> void:
 		# Instant kill
 		if body.has_method("take_damage"):
 			# Deal massive damage (instant death)
-			spike_sound.play()
 			body.take_damage(999)
 			print("SPIKE: Player touched spike - instant death!")

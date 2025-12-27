@@ -306,7 +306,7 @@ script = ExtResource("1_k8rrn")
 sprite_frames = SubResource("SpriteFrames_mbevu")
 animation = &"light_attack1.2"
 autoplay = "idle"
-frame_progress = 0.42745453
+frame_progress = 0.598888
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_3x35j")

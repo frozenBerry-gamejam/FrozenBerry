@@ -35,6 +35,7 @@ var is_frozen: bool = false
 var is_dead: bool = false
 var is_attacking: bool = false
 var hit_targets = []
+var is_transitioning_to_chase: bool = false  # YENİ: chase transition flag
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var detection_area: Area2D = $DetectionArea
@@ -134,6 +135,11 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func patrol_behavior(delta: float) -> void:
+	# YENİ: transition sırasında animasyon güncelleme
+	if is_transitioning_to_chase:
+		velocity.x = 0  # Dur
+		return
+	
 	velocity.x = patrol_direction * SPEED * 0.5
 	var offset_from_spawn = global_position.x - spawn_position.x
 
@@ -244,7 +250,7 @@ func perform_attack() -> void:
 		is_attacking = false
 
 func update_animation() -> void:
-	if not is_attacking and not is_dead:
+	if not is_attacking and not is_dead and not is_transitioning_to_chase:  # YENİ: transition kontrolü eklendi
 		# Eğer velocity 0 ise idle, değilse run
 		if abs(velocity.x) < 5.0:
 			if animated_sprite.sprite_frames.has_animation("enemy_idle"):
@@ -283,11 +289,18 @@ func _on_detection_area_body_entered(body: Node2D) -> void:
 		player = body
 		print("► Player algılandı: ", body.name)
 		
+		# YENİ: Transition flag'i set et
+		is_transitioning_to_chase = true
+		
 		# Player görüldüğünde idle'a geç
 		if animated_sprite.sprite_frames.has_animation("enemy_idle"):
 			animated_sprite.play("enemy_idle")
 			# 0.3 saniye idle bekle, sonra chase başlat
 			await get_tree().create_timer(0.3).timeout
+			
+			# YENİ: Transition flag'i kapat
+			is_transitioning_to_chase = false
+			
 			if player != null and current_state == State.PATROL:
 				change_state(State.CHASE)
 

@@ -170,10 +170,8 @@ func attack_behavior(delta: float) -> void:
 		change_state(State.CHASE)
 		return
 
-	# Attack when cooldown ready and player is close
-	if attack_timer <= 0.0 and distance_to_player_horiz < 25.0:
-		damage_player()
-		attack_timer = ATTACK_COOLDOWN
+	# Note: Damage is now handled by collision system (check_collision_damage)
+	# No distance-based damage anymore - only physical contact
 
 	# Keep sprite facing player (only flip if far enough to avoid jitter)
 	if distance_to_player_horiz > 8.0:

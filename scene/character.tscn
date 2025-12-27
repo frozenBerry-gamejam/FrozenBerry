@@ -1,9 +1,10 @@
-[gd_scene load_steps=50 format=3 uid="uid://pucw1kgckbjk"]
+[gd_scene load_steps=51 format=3 uid="uid://pucw1kgckbjk"]
 
 [ext_resource type="Texture2D" uid="uid://dn8yte3gjqp8w" path="res://assets/character/Fullmain.png" id="1_3x35j"]
 [ext_resource type="Script" uid="uid://culdt0pl1js76" path="res://scripts/character.gd" id="1_k8rrn"]
 [ext_resource type="Texture2D" uid="uid://bqeesryni0ivn" path="res://assets/character/main2.1.png" id="2_6k5wm"]
 [ext_resource type="Script" uid="uid://bv64cqt34nko2" path="res://scripts/health_component.gd" id="3_d7vt2"]
+[ext_resource type="Script" uid="uid://dds4fqmp41mgw" path="res://scripts/hurtbox_component.gd" id="5_7v2w7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ii2y5"]
 atlas = ExtResource("2_6k5wm")
@@ -366,8 +367,8 @@ shape = SubResource("RectangleShape2D_k8rrn")
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("3_d7vt2")
-max_health = 2000000
-current_health = 200000
+max_health = 1
+current_health = 10
 metadata/_custom_type_script = "uid://bv64cqt34nko2"
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -375,6 +376,9 @@ position = Vector2(0, -43)
 zoom = Vector2(4.5, 4.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 2.0
+
+[node name="HurtboxComponent" type="Node" parent="."]
+script = ExtResource("5_7v2w7")
 
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
 [connection signal="frame_changed" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_frame_changed"]

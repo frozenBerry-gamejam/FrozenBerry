@@ -41,6 +41,7 @@ var is_transitioning_to_chase: bool = false  # YENİ: chase transition flag
 @onready var detection_area: Area2D = $DetectionArea
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var enemy_attack_area: Area2D = $EnemyAttackArea
+@onready var hurtbox: HurtboxComponent = $HurtboxComponent
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -80,6 +81,14 @@ func _ready() -> void:
 			health_component.died.connect(_on_health_component_died)
 		if not health_component.damage_taken.is_connected(_on_damage_taken):
 			health_component.damage_taken.connect(_on_damage_taken)
+
+	# Hurtbox component
+	if hurtbox:
+		hurtbox.hitstun_started.connect(_on_hitstun_started)
+		hurtbox.hitstun_ended.connect(_on_hitstun_ended)
+		print("Enemy: HurtboxComponent bağlandı")
+	else:
+		print("Enemy: HurtboxComponent BULUNAMADI!")
 
 func _physics_process(delta: float) -> void:
 	if is_dead or is_frozen:
@@ -373,38 +382,38 @@ func _on_enemy_attack_area_body_entered(body: Node2D) -> void:
 		return
 	
 	if body.is_in_group("player") or body.name == "Character":
-		if body.has_method("take_damage"):
+		# HurtboxComponent üzerinden hasar ver
+		if body.has_node("HurtboxComponent"):
+			var target_hurtbox = body.get_node("HurtboxComponent")
 			print("💥 HASAR VERİLİYOR: ", ATTACK_DAMAGE)
-			body.take_damage(ATTACK_DAMAGE, global_position)
+			target_hurtbox.take_damage(ATTACK_DAMAGE, global_position)
 			hit_targets.append(body)
-			# ÇÖZÜM: Cooldown'u burada SET ETME! perform_attack()'ta zaten başladı
 			print("  ✓ Hasar verildi, cooldown zaten aktif")
 		else:
-			print("✗ take_damage metodu yok!")
+			print("✗ HurtboxComponent yok!")
 
-func take_damage(amount: int, attacker_position: Vector2 = global_position) -> void:
-	if is_in_hitstun or current_state == State.COOLDOWN or is_frozen or is_dead:
-		return
-	
-	if health_component:
-		health_component.take_damage(amount)
-	
-	var knockback_dir = sign(global_position.x - attacker_position.x)
-	if knockback_dir == 0:
-		knockback_dir = 1
-	
+# HITSTUN CALLBACK'LERİ
+func _on_hitstun_started(duration: float) -> void:
+	is_in_hitstun = true
+	hitstun_timer = duration
+
+	# Saldırıyı iptal et
 	if is_attacking:
 		is_attacking = false
 		deactivate_enemy_attack()
-	
-	apply_knockback(knockback_dir, 200.0, -150.0)
 
-func apply_knockback(direction: float, force: float, up_force: float) -> void:
-	velocity.x = direction * force
-	velocity.y = up_force
-	is_in_hitstun = true
-	hitstun_timer = KNOCKBACK_RECOVERY
+	# State'i HITSTUN'a al
 	current_state = State.HITSTUN
+
+	print("Enemy: Hitstun başladı (%0.1fs)" % duration)
+
+func _on_hitstun_ended() -> void:
+	# Hitstun bitince COOLDOWN'a geç
+	is_in_hitstun = false
+	current_state = State.COOLDOWN
+	cooldown_timer = AFTER_DAMAGE_WAIT
+
+	print("Enemy: Hitstun bitti, COOLDOWN'a geçiliyor")
 
 func _on_damage_taken(amount: int) -> void:
 	animated_sprite.modulate = Color(1, 0.3, 0.3)

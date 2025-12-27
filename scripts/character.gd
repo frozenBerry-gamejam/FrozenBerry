@@ -9,6 +9,7 @@ const HITSTUN_DURATION = 0.8  # Enemy ATTACK_COOLDOWN (1.5s) + buffer (0.3s)
 @onready var animated_sprite = $AnimatedSprite2D
 @onready var attack_area = $AttackArea
 @onready var health_component: HealthComponent = $HealthComponent
+@onready var hurtbox: HurtboxComponent = $HurtboxComponent
 
 var is_attacking = false
 var combo_queued = false
@@ -53,7 +54,14 @@ func _ready():
 		print("✓ HealthComponent bağlandı, Can: ", health_component.current_health)
 	else:
 		print("✗ HealthComponent BULUNAMADI!")
-	
+
+	if hurtbox:
+		hurtbox.hitstun_started.connect(_on_hitstun_started)
+		hurtbox.hitstun_ended.connect(_on_hitstun_ended)
+		print("✓ HurtboxComponent bağlandı")
+	else:
+		print("✗ HurtboxComponent BULUNAMADI!")
+
 	print("═══════════════════════════════════════")
 	print("║   CHARACTER HAZIR!                  ║")
 	print("═══════════════════════════════════════")
@@ -201,61 +209,36 @@ func _on_attack_area_body_entered(body):
 	print("║ PLAYER ATTACK HIT!                    ║")
 	print("║ Target: ", body.name.pad_zeros(27), " ║")
 	print("╚═══════════════════════════════════════╝")
-	
+
 	if body in hit_enemies:
 		print("  ⚠ Zaten vuruldu bu saldırıda!")
 		return
-	
-	if body.has_method("take_damage"):
-		body.take_damage(10, global_position)
+
+	# HurtboxComponent üzerinden hasar ver
+	if body.has_node("HurtboxComponent"):
+		var target_hurtbox = body.get_node("HurtboxComponent")
+		target_hurtbox.take_damage(10, global_position)
 		hit_enemies.append(body)
 		print("  ✓ 10 hasar + knockback verildi")
 	else:
-		print("  ✗ take_damage metodu yok!")
+		print("  ✗ HurtboxComponent yok!")
 
-# HASAR SİSTEMİ
-func take_damage(amount: int, attacker_position: Vector2 = global_position) -> void:
-	# ÖLÜYSE HASAR ALMA
-	if is_dead:
-		print("  ⚠ Character ölü, hasar ignore")
-		return
-		
-	if is_in_hitstun:
-		print("  ⚠ Character zaten hitstun'da, hasar ignore")
-		return
-	
-	if health_component:
-		health_component.take_damage(amount)
-	
-	# Knockback yönünü hesapla
-	var knockback_dir = sign(global_position.x - attacker_position.x)
-	if knockback_dir == 0:
-		knockback_dir = -1 if animated_sprite.flip_h else 1
-	
-	# Knockback uygula
-	apply_knockback(knockback_dir, KNOCKBACK_FORCE, KNOCKBACK_UP_FORCE)
-
-func apply_knockback(direction: float, force: float, up_force: float) -> void:
-	# Ölüyse knockback uygulama
-	if is_dead:
-		print("  ⚠ Character ölü, knockback ignore")
-		return
-	
-	# Velocity'yi direkt set et (move_toward kullanma!)
-	velocity.x = direction * force
-	velocity.y = up_force
-	
-	# Hitstun başlat
+# HITSTUN CALLBACK'LERİ
+func _on_hitstun_started(duration: float) -> void:
 	is_in_hitstun = true
-	hitstun_timer = HITSTUN_DURATION
-	
+	hitstun_timer = duration
+
 	# Saldırıyı iptal et
 	if is_attacking:
 		is_attacking = false
 		combo_queued = false
 		deactivate_attack()
-	
-	print("  ✓ Knockback uygulandı: vx=", velocity.x, " vy=", velocity.y)
+
+	print("Character: Hitstun başladı (%0.1fs)" % duration)
+
+func _on_hitstun_ended() -> void:
+	is_in_hitstun = false
+	print("Character: Hitstun bitti")
 
 func _on_damage_taken(amount: int) -> void:
 	print("╔═══════════════════════════════════════╗")

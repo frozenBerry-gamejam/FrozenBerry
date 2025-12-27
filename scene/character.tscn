@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3 uid="uid://pucw1kgckbjk"]
+[gd_scene load_steps=43 format=3 uid="uid://pucw1kgckbjk"]
 
 [ext_resource type="Texture2D" uid="uid://dn8yte3gjqp8w" path="res://assets/character/Fullmain.png" id="1_3x35j"]
 [ext_resource type="Script" uid="uid://culdt0pl1js76" path="res://scripts/character.gd" id="1_k8rrn"]
@@ -299,14 +299,25 @@ animations = [{
 radius = 6.0
 height = 26.0
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_k8rrn"]
+size = Vector2(16, 3)
+
 [node name="Character" type="CharacterBody2D"]
 script = ExtResource("1_k8rrn")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_mbevu")
-animation = &"idle"
+animation = &"light_attack1.2"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_3x35j")
 
+[node name="AttackArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+position = Vector2(-17, 1)
+shape = SubResource("RectangleShape2D_k8rrn")
+
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
+[connection signal="frame_changed" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_frame_changed"]
+[connection signal="body_entered" from="AttackArea" to="." method="_on_attack_area_body_entered"]

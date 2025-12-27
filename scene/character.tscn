@@ -209,7 +209,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_7s5o7")
 }],
 "loop": true,
-"name": &"light_attacck",
+"name": &"light_attack",
 "speed": 5.0
 }, {
 "frames": [{
@@ -245,9 +245,9 @@ script = ExtResource("1_k8rrn")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_mbevu")
-animation = &"run"
+animation = &"light_attack"
 autoplay = "idle"
-frame_progress = 0.004933473
+frame_progress = 0.9136438
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_3x35j")

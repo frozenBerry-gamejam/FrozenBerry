@@ -1,7 +1,7 @@
 extends Area2D
 
 # Bitiş sahnesinin yolu
-const END_SCENE_PATH = "res://scripts/finis_scene_text.tscn"
+const END_SCENE_PATH = "res://scene/end_screen.tscn"
 
 var is_triggered: bool = false
 

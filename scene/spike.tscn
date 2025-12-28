@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://dbujt5giyt5wj" path="res://assets/spike2.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_spike"]
-size = Vector2(12, 12)
+size = Vector2(12, 10.814815)
 
 [node name="Spike" type="Area2D"]
 collision_layer = 16
@@ -16,6 +16,6 @@ scale = Vector2(0.5, 0.5)
 texture = ExtResource("2_tex")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 2)
+position = Vector2(0, 3.600001)
 scale = Vector2(2.7, 2.7)
 shape = SubResource("RectangleShape2D_spike")

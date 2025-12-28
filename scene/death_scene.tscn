@@ -1,34 +1,59 @@
-[gd_scene load_steps=2 format=3 uid="uid://d4ki71gn4snpa"]
+[gd_scene load_steps=3 format=3 uid="uid://d4ki71gn4snpa"]
 
-[sub_resource type="FontFile" id="FontFile_ggssd"]
-cache/0/16/0/ascent = 0.0
-cache/0/16/0/descent = 0.0
-cache/0/16/0/underline_position = 0.0
-cache/0/16/0/underline_thickness = 0.0
-cache/0/16/0/scale = 1.0
+[sub_resource type="GDScript" id="GDScript_death"]
+script/source = "extends Control
 
-[node name="death_scene" type="Node2D"]
+func _input(event):
+	if event is InputEventKey or event is InputEventMouseButton:
+		if event.pressed:
+			get_tree().change_scene_to_file(\"res://scene/title_screen.tscn\")
+"
 
-[node name="ColorRect" type="ColorRect" parent="."]
-offset_left = -1761.0
-offset_top = -863.0
-offset_right = 3392.0
-offset_bottom = 1639.0
+[node name="DeathScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = SubResource("GDScript_death")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="RichTextLabel" type="RichTextLabel" parent="."]
-offset_left = 405.0
-offset_top = 171.0
-offset_right = 1557.0
-offset_bottom = 819.0
-theme_override_constants/table_h_separation = -32
-theme_override_fonts/bold_italics_font = SubResource("FontFile_ggssd")
-theme_override_font_sizes/normal_font_size = 30
-theme_override_font_sizes/bold_font_size = 30
-theme_override_font_sizes/bold_italics_font_size = 30
-theme_override_font_sizes/italics_font_size = 30
-theme_override_font_sizes/mono_font_size = 30
-text = "GAME OVER
-Taxes Again"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 60
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(1000, 350)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 120
+bbcode_enabled = true
+text = "[center]GAME OVER
+[font_size=60]Taxes Again[/font_size][/center]"
+fit_content = true
+scroll_active = false
+
+[node name="SubLabel" type="RichTextLabel" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(1000, 100)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 40
+bbcode_enabled = true
+text = "[center]Press any key to return to Title Screen[/center]"
+fit_content = true
+scroll_active = false

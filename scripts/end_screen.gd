@@ -4,10 +4,8 @@ extends Control
 @onready var subtitle_label: Label = $CenterContainer/VBoxContainer/SubtitleLabel
 
 func _ready() -> void:
-	# Mesajı ayarla - 3 satır, son satır büyük harfle
-	message_label.text = "I can finally go back to how\n"
-	message_label.text = "nothings were before\n"
-	message_label.text = "THE LIGHT BULB\n"
+	# Mesajı tek seferde set et (overwriting bug fixed)
+	message_label.text = "I can finally go back to how things\nwere before the 'light bulb'."
 	subtitle_label.text = "- The End -"
 
 	# Fade-in efekti
@@ -20,6 +18,7 @@ func _ready() -> void:
 	print("╚════════════════════════════════════╝")
 
 func _input(event: InputEvent) -> void:
-	# Herhangi bir tuşa basınca ana menüye dön (veya oyunu kapat)
-	if event.is_pressed():
-		get_tree().quit()
+	# Herhangi bir tuşa basınca ana menüye dön
+	if event is InputEventKey or event is InputEventMouseButton:
+		if event.pressed:
+			get_tree().change_scene_to_file("res://scene/title_screen.tscn")

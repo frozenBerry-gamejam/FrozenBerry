@@ -17719,7 +17719,7 @@ tile_map_data = PackedByteArray("AAAAAMP/AgAAAAAAAAAAAMT/AgAAAAEAAAAAAMX/AgAAAAI
 tile_set = SubResource("TileSet_el4px")
 
 [node name="Character" parent="." instance=ExtResource("3_p8sh5")]
-position = Vector2(100, -260)
+position = Vector2(184, -260)
 
 [node name="AllSpikes" type="Node2D" parent="."]
 position = Vector2(629, -240)

@@ -265,7 +265,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"light_attack1.2",
-"speed": 7.0
+"speed": 8.3
 }, {
 "frames": [{
 "duration": 1.0,
@@ -288,7 +288,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"light_attack_1",
-"speed": 7.0
+"speed": 8.3
 }, {
 "frames": [{
 "duration": 1.0,
@@ -314,7 +314,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"light_attack_2",
-"speed": 7.0
+"speed": 8.3
 }, {
 "frames": [{
 "duration": 1.0,
@@ -354,7 +354,7 @@ script = ExtResource("1_k8rrn")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_mbevu")
-animation = &"die"
+animation = &"light_attack_2"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_3x35j")

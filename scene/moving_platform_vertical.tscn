@@ -1,14 +1,15 @@
-[gd_scene load_steps=3 format=3 uid="uid://platform_vertical_001"]
+[gd_scene load_steps=3 format=3 uid="uid://bt2lrxc46g4r2"]
 
-[ext_resource type="Script" path="res://scripts/moving_platform_vertical.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bhule5s8e4fq4" path="res://scripts/moving_platform_vertical.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
 size = Vector2(100, 20)
 
 [node name="MovingPlatformVertical" type="AnimatableBody2D"]
-collision_layer = 1
+scale = Vector2(0.4, 0.4)
 collision_mask = 0
 script = ExtResource("1_script")
+move_distance = 300.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_platform")

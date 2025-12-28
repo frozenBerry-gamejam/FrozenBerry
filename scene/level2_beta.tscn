@@ -17779,7 +17779,7 @@ scale = Vector2(0.2, 0.2)
 target_platform = NodePath("../MovingPlatformHorizontal")
 
 [node name="Enemy" parent="." instance=ExtResource("8_el4px")]
-position = Vector2(1570, -284)
+position = Vector2(1583, -287)
 
 [node name="FloatingPlatform" parent="." instance=ExtResource("9_wajh4")]
 position = Vector2(1296, -310)
@@ -17790,13 +17790,13 @@ scale = Vector2(0.2, 0.2)
 target_platform = NodePath("../MovingPlatformVertical")
 
 [node name="FloatingPlatform2" parent="." instance=ExtResource("9_wajh4")]
-position = Vector2(1467, -380)
+position = Vector2(1490, -432)
 
 [node name="FloatingPlatform3" parent="." instance=ExtResource("9_wajh4")]
-position = Vector2(1544, -358)
+position = Vector2(1590, -369)
 
 [node name="FloatingPlatform4" parent="." instance=ExtResource("9_wajh4")]
-position = Vector2(1592, -381)
+position = Vector2(1701, -344)
 
 [node name="MovingPlatformVertical" parent="." instance=ExtResource("10_kkgw3")]
 position = Vector2(1390, -380)

@@ -9,7 +9,8 @@ size = Vector2(100, 20)
 scale = Vector2(0.4, 0.4)
 collision_mask = 0
 script = ExtResource("1_script")
-move_distance = 300.0
+move_distance = 100.0
+speed = 50.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_platform")

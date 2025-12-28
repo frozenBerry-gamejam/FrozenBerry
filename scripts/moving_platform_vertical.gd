@@ -1,20 +1,22 @@
 extends AnimatableBody2D
 
-
 @export var move_distance: float = 200.0  # Total distance to move (up and down)
 @export var speed: float = 100.0  # Pixels per second
 @export var wait_time: float = 1.0  # Seconds to wait at boundaries
+@export var is_active: bool = false # Controlled by pressure plate
 
 var start_position: Vector2
 var direction: int = -1  # -1 for up, 1 for down
 var wait_timer: float = 0.0  # Timer for waiting at boundaries
 
-
 func _ready() -> void:
 	start_position = position
 
-
 func _physics_process(delta: float) -> void:
+	# Only move if active
+	if not is_active:
+		return
+
 	# If waiting, decrease timer and don't move
 	if wait_timer > 0:
 		wait_timer -= delta
@@ -34,3 +36,10 @@ func _physics_process(delta: float) -> void:
 		# Reached bottom boundary, wait then go up
 		direction = -1
 		wait_timer = wait_time
+
+# Helper functions for the pressure plate
+func activate():
+	is_active = true
+
+func deactivate():
+	is_active = false

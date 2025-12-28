@@ -1,15 +1,17 @@
-[gd_scene load_steps=15 format=4 uid="uid://jye2g82suc0b"]
+[gd_scene load_steps=17 format=4 uid="uid://dkc3nnjcumbgi"]
 
 [ext_resource type="Texture2D" uid="uid://dbujt5giyt5wj" path="res://assets/spike2.png" id="1_uoba7"]
 [ext_resource type="Texture2D" uid="uid://87nuq8a24ewb" path="res://assets/white.png" id="2_kdopt"]
 [ext_resource type="Texture2D" uid="uid://dknv036y7kbgm" path="res://assets/main.png" id="3_gvwit"]
 [ext_resource type="PackedScene" uid="uid://pucw1kgckbjk" path="res://scene/character.tscn" id="3_p8sh5"]
-[ext_resource type="PackedScene" uid="uid://qnlh63dnffhm" path="res://scene/spike.tscn" id="5_p8sh5"]
+[ext_resource type="PackedScene" uid="uid://y0r2srchi5hn" path="res://scene/spike.tscn" id="5_p8sh5"]
 [ext_resource type="PackedScene" path="res://scene/moving_platform_horizontal.tscn" id="6_aj1f2"]
-[ext_resource type="PackedScene" uid="uid://c8j2k4l5m6n7" path="res://scene/pressure_plate.tscn" id="7_el4px"]
+[ext_resource type="PackedScene" path="res://scene/pressure_plate.tscn" id="7_el4px"]
 [ext_resource type="PackedScene" uid="uid://cbkk2502ca4eb" path="res://scene/enemy.tscn" id="8_el4px"]
-[ext_resource type="PackedScene" uid="uid://ditf7m2h5jqw4" path="res://scene/floating_platform.tscn" id="9_wajh4"]
-[ext_resource type="PackedScene" uid="uid://bt2lrxc46g4r2" path="res://scene/moving_platform_vertical.tscn" id="10_kkgw3"]
+[ext_resource type="PackedScene" path="res://scene/floating_platform.tscn" id="9_wajh4"]
+[ext_resource type="PackedScene" path="res://scene/moving_platform_vertical.tscn" id="10_kkgw3"]
+[ext_resource type="Script" uid="uid://b454833x1utjt" path="res://scripts/RewindEnergyBar.gd" id="11_o8lxi"]
+[ext_resource type="Script" uid="uid://cr5yn85q7hydc" path="res://scripts/health_bar.gd" id="12_ctjnt"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gvwit"]
 texture = ExtResource("1_uoba7")
@@ -17715,10 +17717,6 @@ tile_set = SubResource("TileSet_el4px")
 [node name="Character" parent="." instance=ExtResource("3_p8sh5")]
 position = Vector2(95, -270)
 
-[node name="Camera2D2" type="Camera2D" parent="Character"]
-position = Vector2(1, 5)
-zoom = Vector2(6, 6)
-
 [node name="AllSpikes" type="Node2D" parent="."]
 position = Vector2(629, -240)
 
@@ -17767,6 +17765,9 @@ position = Vector2(680, 10)
 [node name="Spike15" parent="AllSpikes" instance=ExtResource("5_p8sh5")]
 position = Vector2(710, 10)
 
+[node name="Spike16" parent="AllSpikes" instance=ExtResource("5_p8sh5")]
+position = Vector2(90, 10)
+
 [node name="MovingPlatformHorizontal" parent="." instance=ExtResource("6_aj1f2")]
 position = Vector2(1126, -311)
 scale = Vector2(0.4, 0.4)
@@ -17800,3 +17801,35 @@ position = Vector2(1701, -344)
 
 [node name="MovingPlatformVertical" parent="." instance=ExtResource("10_kkgw3")]
 position = Vector2(1390, -380)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="RewindEnergyBar" type="ProgressBar" parent="CanvasLayer"]
+custom_minimum_size = Vector2(200, 30)
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 220.0
+offset_bottom = 90.0
+max_value = 4.0
+show_percentage = false
+script = ExtResource("11_o8lxi")
+player_path = NodePath("../../Character")
+
+[node name="Label" type="Label" parent="CanvasLayer/RewindEnergyBar"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="HealthBar" type="ProgressBar" parent="CanvasLayer"]
+custom_minimum_size = Vector2(200, 30)
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 122.0
+offset_bottom = 47.0
+script = ExtResource("12_ctjnt")
+player_path = NodePath("../../Character")
+
+[node name="Label" type="Label" parent="CanvasLayer/HealthBar"]
+layout_mode = 0
+offset_right = 101.0
+offset_bottom = 27.0

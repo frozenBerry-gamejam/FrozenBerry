@@ -384,7 +384,6 @@ metadata/_custom_type_script = "uid://c12k6i0p2q4h0"
 script = ExtResource("7_mbevu")
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(0, -43)
 zoom = Vector2(4.5, 4.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 2.0

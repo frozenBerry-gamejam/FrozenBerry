@@ -3,6 +3,8 @@
 [sub_resource type="GDScript" id="GDScript_death"]
 script/source = "extends Control
 
+# Müzik artık MusicManager tarafından yönetiliyor
+
 func _input(event):
 	if event is InputEventKey or event is InputEventMouseButton:
 		if event.pressed:

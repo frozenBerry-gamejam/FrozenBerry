@@ -21,6 +21,7 @@ func _ready() -> void:
 	print("║   GAME MANAGER BAŞLATILIYOR         ║")
 	print("╚═══════════════════════════════════════╝")
 	is_game_over = false
+	# Müzik artık MusicManager tarafından yönetiliyor
 
 func player_died() -> void:
 	if is_game_over:
@@ -49,7 +50,7 @@ func show_game_over() -> void:
 	# Reset state
 	is_game_over = false
 
-	# Death scene'i yükle
+	# Death scene'i yükle (Müzik MusicManager tarafından otomatik değiştirilecek)
 	print("  ✓ Death scene yükleniyor...")
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scene/death_scene.tscn")

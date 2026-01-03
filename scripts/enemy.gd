@@ -45,10 +45,17 @@ var is_transitioning_to_chase: bool = false  # YENİ: chase transition flag
 @onready var enemy_attack_area: Area2D = $EnemyAttackArea
 @onready var hurtbox: HurtboxComponent = $HurtboxComponent
 
+# Audio players
+var audio_hit: AudioStreamPlayer
+var audio_death: AudioStreamPlayer
+
 func _ready() -> void:
 	add_to_group("enemies")
 	spawn_position = global_position
-	
+
+	# Setup audio
+	setup_audio()
+
 	# Detection area
 	if detection_area:
 		if not detection_area.body_entered.is_connected(_on_detection_area_body_entered):
@@ -91,6 +98,19 @@ func _ready() -> void:
 		print("Enemy: HurtboxComponent bağlandı")
 	else:
 		print("Enemy: HurtboxComponent BULUNAMADI!")
+
+func setup_audio() -> void:
+	# Hit sound
+	audio_hit = AudioStreamPlayer.new()
+	audio_hit.stream = load("res://audio/enemy/hit.wav")
+	audio_hit.volume_db = -5.0
+	add_child(audio_hit)
+
+	# Death sound
+	audio_death = AudioStreamPlayer.new()
+	audio_death.stream = load("res://audio/enemy/death.wav")
+	audio_death.volume_db = -3.0
+	add_child(audio_death)
 
 # En iyi hedefi bul: Ghost > Player
 func find_best_target() -> Node2D:
@@ -498,6 +518,10 @@ func _on_hitstun_ended() -> void:
 	print("Enemy: Hitstun bitti, COOLDOWN'a geçiliyor")
 
 func _on_damage_taken(amount: int) -> void:
+	# Play hit sound
+	if audio_hit:
+		audio_hit.play()
+
 	animated_sprite.modulate = Color(1, 0.3, 0.3)
 	await get_tree().create_timer(0.1).timeout
 	animated_sprite.modulate = Color.WHITE
@@ -505,12 +529,16 @@ func _on_damage_taken(amount: int) -> void:
 func _on_health_component_died() -> void:
 	if is_dead:
 		return
-	
+
 	print("╔═══════════════════╗")
 	print("║  ENEMY ÖLDÜ!      ║")
 	print("╚═══════════════════╝")
 	is_dead = true
 	is_attacking = false
+
+	# Play death sound
+	if audio_death:
+		audio_death.play()
 	
 	deactivate_enemy_attack()
 	set_physics_process(false)

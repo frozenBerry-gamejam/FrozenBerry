@@ -4,17 +4,17 @@
 [ext_resource type="Texture2D" uid="uid://87nuq8a24ewb" path="res://assets/white.png" id="2_kdopt"]
 [ext_resource type="Texture2D" uid="uid://dknv036y7kbgm" path="res://assets/main.png" id="3_gvwit"]
 [ext_resource type="PackedScene" uid="uid://pucw1kgckbjk" path="res://scene/character.tscn" id="3_p8sh5"]
-[ext_resource type="PackedScene" uid="uid://y0r2srchi5hn" path="res://scene/spike.tscn" id="5_p8sh5"]
+[ext_resource type="PackedScene" uid="uid://qnlh63dnffhm" path="res://scene/spike.tscn" id="5_p8sh5"]
 [ext_resource type="PackedScene" path="res://scene/moving_platform_horizontal.tscn" id="6_aj1f2"]
-[ext_resource type="PackedScene" path="res://scene/pressure_plate.tscn" id="7_el4px"]
+[ext_resource type="PackedScene" uid="uid://c8j2k4l5m6n7" path="res://scene/pressure_plate.tscn" id="7_el4px"]
 [ext_resource type="PackedScene" uid="uid://cbkk2502ca4eb" path="res://scene/enemy.tscn" id="8_el4px"]
-[ext_resource type="PackedScene" path="res://scene/floating_platform.tscn" id="9_wajh4"]
-[ext_resource type="PackedScene" path="res://scene/moving_platform_vertical.tscn" id="10_kkgw3"]
+[ext_resource type="PackedScene" uid="uid://ditf7m2h5jqw4" path="res://scene/floating_platform.tscn" id="9_wajh4"]
+[ext_resource type="PackedScene" uid="uid://bt2lrxc46g4r2" path="res://scene/moving_platform_vertical.tscn" id="10_kkgw3"]
 [ext_resource type="Script" uid="uid://b454833x1utjt" path="res://scripts/RewindEnergyBar.gd" id="11_o8lxi"]
 [ext_resource type="Script" uid="uid://cr5yn85q7hydc" path="res://scripts/health_bar.gd" id="12_ctjnt"]
 [ext_resource type="PackedScene" uid="uid://dqwpwlx07prv6" path="res://scene/collectable.tscn" id="14_asjmc"]
-[ext_resource type="PackedScene" path="res://scene/inviwall.tscn" id="14_xsib0"]
-[ext_resource type="PackedScene" path="res://scene/door.tscn" id="15_asjmc"]
+[ext_resource type="PackedScene" uid="uid://bn4wh0hntnmoq" path="res://scene/inviwall.tscn" id="14_xsib0"]
+[ext_resource type="PackedScene" uid="uid://c8gem18sid2mw" path="res://scene/door.tscn" id="15_asjmc"]
 [ext_resource type="PackedScene" uid="uid://dp0cprb8vviks" path="res://scene/finish.tscn" id="16_okgxv"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gvwit"]
@@ -6142,6 +6142,7 @@ texture = ExtResource("3_gvwit")
 34:26/0 = 0
 35:26/0 = 0
 36:26/0 = 0
+36:26/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 37:26/0 = 0
 38:26/0 = 0
 39:26/0 = 0
@@ -7366,13 +7367,21 @@ texture = ExtResource("3_gvwit")
 98:31/0 = 0
 99:31/0 = 0
 100:31/0 = 0
+100:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 101:31/0 = 0
+101:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 102:31/0 = 0
+102:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 103:31/0 = 0
+103:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 104:31/0 = 0
+104:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 105:31/0 = 0
+105:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 106:31/0 = 0
+106:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 107:31/0 = 0
+107:31/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 108:31/0 = 0
 109:31/0 = 0
 110:31/0 = 0
@@ -7823,6 +7832,7 @@ texture = ExtResource("3_gvwit")
 91:33/0 = 0
 92:33/0 = 0
 93:33/0 = 0
+93:33/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 94:33/0 = 0
 95:33/0 = 0
 96:33/0 = 0

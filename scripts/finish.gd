@@ -1,8 +1,5 @@
 extends Area2D
 
-# Bitiş sahnesinin yolu
-const END_SCENE_PATH = "res://scene/end_screen.tscn"
-
 var is_triggered: bool = false
 
 func _ready() -> void:
@@ -28,6 +25,6 @@ func _on_body_entered(body: Node2D) -> void:
 		visible = false
 		set_deferred("monitoring", false)
 
-		# Kısa bir gecikme sonra sahneyi değiştir
+		# Kısa bir gecikme sonra bir sonraki seviyeye geç
 		await get_tree().create_timer(0.5).timeout
-		get_tree().change_scene_to_file(END_SCENE_PATH)
+		LevelManager.next_level()

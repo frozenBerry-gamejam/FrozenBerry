@@ -1,5 +1,7 @@
 extends Control
 
+# Müzik artık MusicManager tarafından yönetiliyor
+
 func _ready():
 	# Ensure the cursor is visible and game is not paused when in the main menu
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)

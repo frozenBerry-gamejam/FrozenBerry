@@ -38,11 +38,18 @@ var player_energy_component: RewindEnergyComponent = null
 var frozen_enemies: Array = []
 var frozen_objects: Array = []
 
+# Audio players
+var audio_rewind_start: AudioStreamPlayer
+var audio_rewind_stop: AudioStreamPlayer
+
 func _ready() -> void:
 	add_to_group("rewind_manager")
 	print("╔═══════════════════════════════════════╗")
 	print("║   REWIND MANAGER BAŞLATILIYOR       ║")
 	print("╚═══════════════════════════════════════╝")
+
+	# Setup audio
+	setup_audio()
 
 	# Player'ı bul
 	await get_tree().process_frame
@@ -52,6 +59,21 @@ func _ready() -> void:
 		print("  ✓ Player bulundu:", player.name)
 	else:
 		print("  ✗ Player bulunamadı!")
+
+func setup_audio() -> void:
+	# Rewind start sound
+	audio_rewind_start = AudioStreamPlayer.new()
+	audio_rewind_start.stream = load("res://audio/rewind/rewind_start.wav")
+	audio_rewind_start.volume_db = -5.0
+	add_child(audio_rewind_start)
+
+	# Rewind stop sound
+	audio_rewind_stop = AudioStreamPlayer.new()
+	audio_rewind_stop.stream = load("res://audio/rewind/rewind_stop.wav")
+	audio_rewind_stop.volume_db = -5.0
+	add_child(audio_rewind_stop)
+
+	print("  ✓ Rewind audio setup complete")
 
 # RewindComponent'leri kaydet
 func register_rewindable(component: RewindComponent) -> void:
@@ -115,6 +137,10 @@ func start_rewind() -> void:
 	print("║   REWIND BAŞLADI!                   ║")
 	print("╚═══════════════════════════════════════╝")
 
+	# Play rewind start sound
+	if audio_rewind_start:
+		audio_rewind_start.play()
+
 	is_rewinding = true
 	rewind_time = 0.0
 	rewind_started.emit()
@@ -167,6 +193,10 @@ func stop_rewind() -> void:
 	print("╔═══════════════════════════════════════╗")
 	print("║   REWIND DURDU! (%0.1fs)             ║" % rewind_time)
 	print("╚═══════════════════════════════════════╝")
+
+	# Play rewind stop sound
+	if audio_rewind_stop:
+		audio_rewind_stop.play()
 
 	is_rewinding = false
 	rewind_stopped.emit()

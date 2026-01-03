@@ -11,6 +11,16 @@ const HITSTUN_DURATION = 0.8  # Enemy ATTACK_COOLDOWN (1.5s) + buffer (0.3s)
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var hurtbox: HurtboxComponent = $HurtboxComponent
 
+# Audio players
+var audio_jump: AudioStreamPlayer
+var audio_land: AudioStreamPlayer
+var audio_footstep1: AudioStreamPlayer
+var audio_footstep2: AudioStreamPlayer
+var audio_attack_whoosh: AudioStreamPlayer
+var audio_hit_enemy: AudioStreamPlayer
+var audio_take_damage: AudioStreamPlayer
+var audio_death: AudioStreamPlayer
+
 var is_attacking = false
 var combo_queued = false
 var hit_enemies = []
@@ -18,14 +28,20 @@ var is_in_hitstun = false
 var hitstun_timer = 0.0
 var is_dead = false  # Ölüm durumu
 var death_flag = false  # GameManager için ölüm flag'i
+var was_on_floor = false  # Landing detection için
+var footstep_timer = 0.0  # Footstep timing
+var current_footstep = 1  # Alternatif footstep (1 veya 2)
 
 func _ready():
 	print("═══════════════════════════════════════")
 	print("║   CHARACTER BAŞLATILIYOR            ║")
 	print("═══════════════════════════════════════")
-	
+
 	add_to_group("player")
 	attack_area.monitoring = false
+
+	# Setup audio players
+	setup_audio()
 	
 	# AnimatedSprite'ın pause'da bile çalışmasını sağla
 	if animated_sprite:
@@ -66,6 +82,56 @@ func _ready():
 	print("║   CHARACTER HAZIR!                  ║")
 	print("═══════════════════════════════════════")
 
+func setup_audio() -> void:
+	# Jump sound
+	audio_jump = AudioStreamPlayer.new()
+	audio_jump.stream = load("res://audio/player/jump.wav")
+	audio_jump.volume_db = -5.0
+	add_child(audio_jump)
+
+	# Land sound
+	audio_land = AudioStreamPlayer.new()
+	audio_land.stream = load("res://audio/player/land.wav")
+	audio_land.volume_db = -2.0  # Daha yüksek ses
+	add_child(audio_land)
+
+	# Footstep sounds (alternating)
+	audio_footstep1 = AudioStreamPlayer.new()
+	audio_footstep1.stream = load("res://audio/player/footstep1.wav")
+	audio_footstep1.volume_db = -10.0
+	add_child(audio_footstep1)
+
+	audio_footstep2 = AudioStreamPlayer.new()
+	audio_footstep2.stream = load("res://audio/player/footstep2.wav")
+	audio_footstep2.volume_db = -10.0
+	add_child(audio_footstep2)
+
+	# Attack whoosh sound (2 variants for combo)
+	audio_attack_whoosh = AudioStreamPlayer.new()
+	audio_attack_whoosh.stream = load("res://audio/player/attack_whoosh1.wav")
+	audio_attack_whoosh.volume_db = -8.0
+	add_child(audio_attack_whoosh)
+
+	# Hit enemy sound
+	audio_hit_enemy = AudioStreamPlayer.new()
+	audio_hit_enemy.stream = load("res://audio/player/hit_enemy.wav")
+	audio_hit_enemy.volume_db = -5.0
+	add_child(audio_hit_enemy)
+
+	# Take damage sound
+	audio_take_damage = AudioStreamPlayer.new()
+	audio_take_damage.stream = load("res://audio/player/take_damage.wav")
+	audio_take_damage.volume_db = 0.0
+	add_child(audio_take_damage)
+
+	# Death sound
+	audio_death = AudioStreamPlayer.new()
+	audio_death.stream = load("res://audio/player/death.wav")
+	audio_death.volume_db = 0.0
+	add_child(audio_death)
+
+	print("✓ Audio players setup complete")
+
 func _physics_process(delta: float) -> void:
 	# Ölüyse TAMAMEN dur - yerçekimi bile çalışmasın
 	if is_dead:
@@ -84,20 +150,37 @@ func _physics_process(delta: float) -> void:
 		# Yerçekimi
 		if not is_on_floor():
 			velocity += get_gravity() * delta
-		
+
 		# Sürtünme - yavaşça dur
 		velocity.x = move_toward(velocity.x, 0, SPEED * delta * 3)
-		
+
 		move_and_slide()
+
+		# Landing detection (hitstun sırasında da)
+		if not was_on_floor and is_on_floor():
+			if audio_land:
+				audio_land.play()
+				print("🔊 Landing sound played (hitstun)!")
+		was_on_floor = is_on_floor()
+
 		return
-	
+
+	# Landing detection (normal hareket sırasında)
+	if not was_on_floor and is_on_floor():
+		if audio_land:
+			audio_land.play()
+			print("🔊 Landing sound played!")
+	was_on_floor = is_on_floor()
+
 	# Normal yerçekimi
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 	
 	# Zıplama
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = JUMP_VELOCITY
+		if audio_jump:
+			audio_jump.play()
 	
 	# Saldırı girişi
 	if Input.is_action_just_pressed("attack") and is_on_floor():
@@ -107,7 +190,7 @@ func _physics_process(delta: float) -> void:
 			combo_queued = true
 	
 	var direction := Input.get_axis("move_left", "move_right")
-	
+
 	# Saldırı sırasında hareket kontrolü
 	if not is_attacking:
 		if direction:
@@ -116,8 +199,25 @@ func _physics_process(delta: float) -> void:
 			velocity.x = move_toward(velocity.x, 0, SPEED)
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED * 2)
-	
+
 	move_and_slide()
+
+	# Footstep sounds (yerde ve hareket ederken)
+	if is_on_floor() and abs(velocity.x) > 20.0 and not is_attacking:
+		footstep_timer -= delta
+		if footstep_timer <= 0.0:
+			# Alternatif footstep çal
+			if current_footstep == 1:
+				if audio_footstep1:
+					audio_footstep1.play()
+				current_footstep = 2
+			else:
+				if audio_footstep2:
+					audio_footstep2.play()
+				current_footstep = 1
+
+			# Timer'ı reset et (hıza göre ayarla)
+			footstep_timer = 0.35  # 350ms aralıklarla footstep
 	
 	# Animasyon güncelleme
 	if not is_attacking:
@@ -128,6 +228,11 @@ func perform_attack() -> void:
 	combo_queued = false
 	hit_enemies.clear()
 	animated_sprite.play("light_attack_1")
+
+	# Play attack whoosh sound
+	if audio_attack_whoosh:
+		audio_attack_whoosh.play()
+
 	print("ATTACK: Saldırı başladı - light_attack_1")
 
 func update_animation(direction: float) -> void:
@@ -219,6 +324,11 @@ func _on_attack_area_body_entered(body):
 		var target_hurtbox = body.get_node("HurtboxComponent")
 		target_hurtbox.take_damage(10, global_position)
 		hit_enemies.append(body)
+
+		# Play hit sound
+		if audio_hit_enemy:
+			audio_hit_enemy.play()
+
 		print("  ✓ 10 hasar + knockback verildi")
 	else:
 		print("  ✗ HurtboxComponent yok!")
@@ -244,7 +354,11 @@ func _on_damage_taken(amount: int) -> void:
 	print("╔═══════════════════════════════════════╗")
 	print("║ PLAYER HASAR ALDI: ", str(amount).pad_zeros(16), " ║")
 	print("╚═══════════════════════════════════════╝")
-	
+
+	# Play damage sound
+	if audio_take_damage:
+		audio_take_damage.play()
+
 	# Hasar görsel efekti
 	animated_sprite.modulate = Color(1, 0.3, 0.3)
 	await get_tree().create_timer(0.1).timeout
@@ -254,11 +368,15 @@ func _on_health_component_died() -> void:
 	# ÖNEMLİ: is_dead ve death_flag'i EN BAŞTA set et
 	is_dead = true
 	death_flag = true
-	
+
+	# Play death sound
+	if audio_death:
+		audio_death.play()
+
 	print("╔═══════════════════════════════════════╗")
 	print("║     PLAYER: Ölüm prosedürü başladı  ║")
 	print("╚═══════════════════════════════════════╝")
-	
+
 	# 1. Fizik ve collision temizliği
 	velocity = Vector2.ZERO
 	set_physics_process(false)

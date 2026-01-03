@@ -3450,7 +3450,7 @@ offset_right = 101.0
 offset_bottom = 27.0
 
 [node name="Collectable" parent="." instance=ExtResource("7_p7gso")]
-position = Vector2(389, -61)
+position = Vector2(837.99994, -78)
 
 [node name="Finish" parent="." instance=ExtResource("9_h8gxk")]
-position = Vector2(443.00006, -71)
+position = Vector2(1444, -81.00001)

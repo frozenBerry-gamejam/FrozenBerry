@@ -28,6 +28,11 @@ func _ready() -> void:
 	collision_layer = 8  # Layer 4 (2^3 = 8)
 	collision_mask = 1   # Player layer (1)
 
+	# Load default collect sound if none is set
+	if collect_sound == null:
+		collect_sound = load("res://audio/ui/collect.wav")
+		print("  ✓ Default collect sound loaded")
+
 	print("✓ Collectable hazır: ", name)
 
 func _on_body_entered(body: Node2D) -> void:
